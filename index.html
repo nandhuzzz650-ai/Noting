@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f1115">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Notes — UPSC</title>
+<style>
+:root{
+  --bg:#0f1115;--panel:#171a21;--panel2:#1e222b;--border:#2a2f3a;
+  --text:#e8eaed;--sub:#9aa3b2;--accent:#6ea8fe;--accent2:#8b5cf6;
+  --danger:#f87171;--radius:14px;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  box-sizing:border-box;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,sans-serif;
+  display:flex;flex-direction:column;height:100%;overflow:hidden}
+header{padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+header h1{margin:0;font-size:19px}
+header .sub{color:var(--sub);font-size:12px;margin-top:2px}
+main{flex:1;overflow-y:auto;padding:12px 14px 90px;-webkit-overflow-scrolling:touch}
+nav.bottom{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--panel);
+  border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom,0px);z-index:20}
+nav.bottom button{flex:1;background:none;border:none;color:var(--sub);font-size:11px;padding:10px 2px 8px;
+  display:flex;flex-direction:column;align-items:center;gap:3px}
+nav.bottom button.active{color:var(--accent)}
+nav.bottom .ic{font-size:18px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:13px 14px;margin-bottom:10px}
+.card:active{opacity:.85}
+.chip{display:inline-block;background:var(--panel2);color:var(--accent);border-radius:20px;padding:3px 9px;
+  font-size:11px;margin:2px 3px 0 0}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.date{font-weight:600;font-size:15px}
+.meta{color:var(--sub);font-size:12px;margin-top:4px}
+.fab{position:fixed;right:16px;bottom:74px;background:var(--accent);color:#0b0d12;border:none;border-radius:30px;
+  padding:13px 18px;font-weight:600;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.4);z-index:15}
+input,textarea,select{width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);
+  border-radius:10px;padding:10px 11px;font-size:14px;margin-bottom:10px;font-family:inherit}
+textarea{min-height:110px;resize:vertical}
+label{display:block;font-size:12px;color:var(--sub);margin-bottom:4px}
+.btn{background:var(--accent);color:#0b0d12;border:none;border-radius:10px;padding:11px 16px;font-weight:600;
+  font-size:14px;width:100%;margin-top:4px}
+.btn.sec{background:var(--panel2);color:var(--text);border:1px solid var(--border)}
+.btn.ghost{background:none;color:var(--accent);border:none;width:auto;padding:6px 0}
+.btn.danger{background:var(--danger);color:#170707}
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.topbar .back{font-size:22px;background:none;border:none;color:var(--accent)}
+.section-card{border-left:3px solid var(--accent2)}
+.section-card .topic{font-size:10.5px;letter-spacing:.4px;color:var(--accent2);font-weight:700;text-transform:uppercase}
+.section-card h4{margin:3px 0 6px;font-size:15px}
+.section-card .content{color:var(--sub);font-size:13px;white-space:pre-wrap;max-height:70px;overflow:hidden}
+.empty{color:var(--sub);text-align:center;padding:40px 10px;font-size:13px}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:30;display:flex;align-items:flex-end}
+.modal{background:var(--panel);width:100%;border-radius:18px 18px 0 0;padding:16px;max-height:86vh;overflow-y:auto}
+.modal h3{margin:0 0 10px}
+.pill-row{display:flex;gap:8px;margin-bottom:10px}
+.pill-row button{flex:1;background:var(--panel2);border:1px solid var(--border);color:var(--sub);border-radius:10px;padding:9px;font-size:12px}
+.pill-row button.on{color:var(--accent);border-color:var(--accent)}
+.small{font-size:11px;color:var(--sub)}
+.timeline-item{display:flex;gap:10px;margin-bottom:10px}
+.timeline-item .t{color:var(--sub);font-size:12px;min-width:44px}
+.searchbox{position:sticky;top:0;background:var(--bg);padding-bottom:8px}
+.tag{background:var(--panel2);border-radius:8px;padding:2px 6px;font-size:10px;color:var(--sub);margin-right:4px}
+</style>
+</head>
+<body>
+<header><h1>Notes</h1><div class="row"><div class="sub" id="hdrSub">UPSC daily study log</div><div class="small" id="syncStatus">●</div></div></header>
+<main id="main"></main>
+<button class="fab" id="fab" style="display:none">+ New Daily Note</button>
+<nav class="bottom">
+  <button data-v="daily" class="active"><span class="ic">📅</span>Daily</button>
+  <button data-v="topics"><span class="ic">📚</span>Topics</button>
+  <button data-v="revision"><span class="ic">🔁</span>Revision</button>
+  <button data-v="search"><span class="ic">🔎</span>Search</button>
+  <button data-v="settings"><span class="ic">⚙️</span>Settings</button>
+</nav>
+<div id="modalRoot"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://dholwkxjnedtveeruoco.supabase.co";
+const SUPABASE_ANON_KEY="sb_publishable_5ONsd9FfGLgGdDg2PkGasQ_YphMxRvk";
+const sbClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const TOPICS=["Indian Heritage and Culture","Modern Indian History","Society","World and Indian Geography",
+"Polity and Constitution","Governance and Social Justice","International Relations","Indian Economy",
+"Science & Technology","Environment","Disaster Management","Internal Security",
+"Ethics, Integrity and Aptitude","CSAT","Optional"];
+
+let db, view="daily", curNoteId=null, curSectionId=null;
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const fmtDate=d=>new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+const fmtTime=d=>new Date(d).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+
+function openDB(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open('upscNotesDB',1);
+    r.onupgradeneeded=e=>{
+      const d=e.target.result;
+      const notes=d.createObjectStore('dailyNotes',{keyPath:'id'});
+      notes.createIndex('date','date');
+      const sec=d.createObjectStore('sections',{keyPath:'id'});
+      sec.createIndex('dailyNoteId','dailyNoteId');
+      sec.createIndex('topic','topic');
+    };
+    r.onsuccess=e=>res(e.target.result);
+    r.onerror=e=>rej(e);
+  });
+}
+function tx(store,mode='readonly'){return db.transaction(store,mode).objectStore(store);}
+function all(store){return new Promise(res=>{const out=[];tx(store).openCursor().onsuccess=e=>{
+  const c=e.target.result; if(c){out.push(c.value);c.continue();}else res(out);};});}
+function put(store,val){return new Promise(res=>{const r=tx(store,'readwrite').put(val);r.onsuccess=()=>{triggerAutoSync();res(val);};});}
+function del(store,id){return new Promise(res=>{tx(store,'readwrite').delete(id).onsuccess=()=>{triggerAutoSync();res();};});}
+function getOne(store,id){return new Promise(res=>{tx(store).get(id).onsuccess=e=>res(e.target.result);});}
+
+async function deleteSection(id){
+  await del('sections', id);
+  if(navigator.onLine){
+    try { await sbClient.from('sections').delete().eq('id', id); } catch(e){ console.warn('Cloud delete section failed', e); }
+  }
+}
+
+async function deleteNote(id){
+  const secs=(await all('sections')).filter(s=>s.dailyNoteId===id);
+  for(const s of secs){
+    await deleteSection(s.id);
+  }
+  await del('dailyNotes', id);
+  if(navigator.onLine){
+    try { await sbClient.from('daily_notes').delete().eq('id', id); } catch(e){ console.warn('Cloud delete note failed', e); }
+  }
+}
+
+function setSyncStatus(s){
+  const el=document.getElementById('syncStatus'); if(!el) return;
+  const map={synced:['#4ade80','Synced'],syncing:['#facc15','Syncing…'],offline:['#9aa3b2','Offline'],error:['#f87171','Sync error']};
+  const [color,label]=map[s]||map.offline;
+  el.style.color=color; el.title=label; el.textContent='● '+label;
+}
+let syncTimer=null;
+function triggerAutoSync(){
+  if(syncTimer) clearTimeout(syncTimer);
+  syncTimer=setTimeout(autoSync,1500);
+}
+async function autoSync(){
+  if(!navigator.onLine){ setSyncStatus('offline'); return; }
+  setSyncStatus('syncing');
+  try{
+    await pullRemoteMerge();
+    await pushLocalChanged();
+    setSyncStatus('synced');
+  }catch(e){ setSyncStatus('error'); console.warn('autoSync failed',e); }
+}
+async function pullRemoteMerge(){
+  const r1=await sbClient.from('daily_notes').select('*');
+  const r2=await sbClient.from('sections').select('*');
+  if(r1.error||r2.error) throw new Error((r1.error&&r1.error.message)||(r2.error&&r2.error.message));
+  for(const n of r1.data){
+    const local=await getOne('dailyNotes',n.id);
+    if(!local){ await putRaw('dailyNotes',{id:n.id,date:n.date,title:n.title,createdAt:n.created_at}); }
+  }
+  for(const s of r2.data){
+    const local=await getOne('sections',s.id);
+    if(!local || (s.updated_at||0) > (local.updatedAt||0)){
+      await putRaw('sections',{id:s.id,dailyNoteId:s.daily_note_id,topic:s.topic,title:s.title,
+        content:s.content,tags:s.tags||[],needsRevision:s.needs_revision,
+        createdAt:s.created_at,updatedAt:s.updated_at,history:s.history||[]});
+    }
+  }
+}
+async function pushLocalChanged(){
+  const notes=await all('dailyNotes'); const secs=await all('sections');
+  const r1=await sbClient.from('daily_notes').select('id,created_at');
+  const r2=await sbClient.from('sections').select('id,updated_at');
+  const remoteNoteIds=new Set((r1.data||[]).map(x=>x.id));
+  const remoteSecMap={}; (r2.data||[]).forEach(x=>remoteSecMap[x.id]=x.updated_at||0);
+  const notesToPush=notes.filter(n=>!remoteNoteIds.has(n.id));
+  const secsToPush=secs.filter(s=>!(s.id in remoteSecMap) || (s.updatedAt||0) > remoteSecMap[s.id]);
+  if(notesToPush.length){
+    await sbClient.from('daily_notes').upsert(notesToPush.map(n=>({id:n.id,date:n.date,title:n.title,created_at:n.createdAt})));
+  }
+  if(secsToPush.length){
+    await sbClient.from('sections').upsert(secsToPush.map(s=>({id:s.id,daily_note_id:s.dailyNoteId,topic:s.topic,
+      title:s.title,content:s.content,tags:s.tags||[],needs_revision:!!s.needsRevision,
+      created_at:s.createdAt,updated_at:s.updatedAt,history:s.history||[]})));
+  }
+}
+// direct write without re-triggering sync loop
+function putRaw(store,val){return new Promise(res=>{const r=tx(store,'readwrite').put(val);r.onsuccess=()=>res(val);});}
+
+window.addEventListener('online',()=>{ setSyncStatus('syncing'); autoSync(); });
+window.addEventListener('offline',()=>setSyncStatus('offline'));
+setInterval(()=>{ if(navigator.onLine) autoSync(); },45000);
+
+async function createNote(title){
+  const n={id:uid(),date:Date.now(),title:title||'Daily UPSC Notes',createdAt:Date.now()};
+  await put('dailyNotes',n); return n;
+}
+async function addSection(dailyNoteId,topic,title,content,tags){
+  const s={id:uid(),dailyNoteId,topic,title,content,tags:tags||[],needsRevision:false,
+    createdAt:Date.now(),updatedAt:Date.now(),history:[]};
+  await put('sections',s); return s;
+}
+// A section's `content` is the innerHTML of its notepad editor: plain text plus
+// inline <img> tags wherever an image was inserted between notes. Storing it as
+// HTML in the same `content` field (rather than a new column) means it rides
+// along with the existing local + cloud sync with no schema changes.
+function legacyToHtml(content){
+  if(!content) return '';
+  if(/<[a-z][\s\S]*>/i.test(content) && !/\[\[IMG\]\]/.test(content)) return content; // already rich HTML
+  const esc=t=>t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const re=/\[\[IMG\]\]([\s\S]*?)\[\[\/IMG\]\]/g;
+  let html='',last=0,m;
+  while((m=re.exec(content))){
+    html+=esc(content.slice(last,m.index)).replace(/\n/g,'<br>');
+    html+='<img src="'+m[1]+'" style="max-width:100%;border-radius:10px;display:block;margin:10px 0">';
+    last=re.lastIndex;
+  }
+  html+=esc(content.slice(last)).replace(/\n/g,'<br>');
+  return html;
+}
+function contentPreview(content){
+  if(!content) return '';
+  let t=legacyToHtml(content);
+  t=t.replace(/<img[^>]*>/gi,'📷 Image ');
+  t=t.replace(/<br\s*\/?>/gi,' ').replace(/<\/?div[^>]*>/gi,' ').replace(/<[^>]+>/g,'');
+  t=t.replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+  return t.replace(/\s+/g,' ').trim();
+}
+function readImageCompressed(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>{
+      const img=new Image();
+      img.onload=()=>{
+        const maxW=1000, scale=Math.min(1,maxW/img.width);
+        const canvas=document.createElement('canvas');
+        canvas.width=Math.round(img.width*scale); canvas.height=Math.round(img.height*scale);
+        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+        resolve(canvas.toDataURL('image/jpeg',0.72));
+      };
+      img.onerror=()=>reject(new Error('Not a readable image'));
+      img.src=reader.result;
+    };
+    reader.onerror=()=>reject(new Error('Could not read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function h(tag,attrs,children){
+  const el=document.createElement(tag);
+  for(const k in attrs||{}){ if(k==='class')el.className=attrs[k]; else if(k.startsWith('on'))el[k]=attrs[k]; else el.setAttribute(k,attrs[k]); }
+  (children||[]).forEach(c=>{ if(typeof c==='string')el.appendChild(document.createTextNode(c)); else if(c) el.appendChild(c); });
+  return el;
+}
+
+// --- Back-button / history integration -------------------------------------
+// Every screen (view + which note/section/topic is open) and every open modal
+// is mirrored into the browser's session history, so the device/app back
+// button (and any on-screen "←" back arrow) navigates within the app instead
+// of leaving it. Only actual navigation changes push a new entry (deduped by
+// content) so repeated re-renders of the same screen don't pile up the stack.
+let modalOpen=false, lastHistoryKey=null, historyBooted=false;
+function currentNavState(){ return {view,curNoteId,curSectionId,curTopic,modalOpen}; }
+function pushHistoryState(){
+  const key=JSON.stringify(currentNavState());
+  if(key===lastHistoryKey) return;
+  lastHistoryKey=key;
+  const state=currentNavState();
+  if(!historyBooted){ historyBooted=true; history.replaceState(state,''); }
+  else history.pushState(state,'');
+}
+window.addEventListener('popstate', async e=>{
+  if(view==='sectionEdit') await flushSectionEdit();
+  document.getElementById('modalRoot').innerHTML='';
+  modalOpen=false;
+  if(e.state){
+    view=e.state.view; curNoteId=e.state.curNoteId; curSectionId=e.state.curSectionId; curTopic=e.state.curTopic;
+  } else {
+    view='daily'; curNoteId=null; curSectionId=null; curTopic=null;
+  }
+  lastHistoryKey=JSON.stringify(currentNavState());
+  render();
+});
+
+function closeModal(){
+  document.getElementById('modalRoot').innerHTML='';
+  if(modalOpen){ modalOpen=false; pushHistoryState(); }
+}
+function openModal(node){ const root=document.getElementById('modalRoot');
+  root.innerHTML=''; root.appendChild(h('div',{class:'modal-bg',onclick:e=>{if(e.target.className==='modal-bg')closeModal();}},[
+    h('div',{class:'modal'},[node])
+  ]));
+  if(!modalOpen){ modalOpen=true; pushHistoryState(); }
+}
+
+async function render(){
+  pushHistoryState();
+  const main=document.getElementById('main');
+  main.innerHTML='';
+  document.querySelectorAll('nav.bottom button').forEach(b=>b.classList.toggle('active',b.dataset.v===view));
+  document.getElementById('fab').style.display = view==='daily' ? 'block':'none';
+  document.getElementById('hdrSub').textContent = ({daily:'UPSC daily study log',topics:'Organized by subject',
+    revision:'Flagged for revision',search:'Search everything',settings:'Backup & data'}[view]) || '';
+
+  if(view==='daily') return renderDaily(main);
+  if(view==='topics') return renderTopics(main);
+  if(view==='revision') return renderRevision(main);
+  if(view==='search') return renderSearch(main);
+  if(view==='settings') return renderSettings(main);
+  if(view==='note') return renderNote(main,curNoteId);
+  if(view==='topicDetail') return renderTopicDetail(main,curTopic);
+  if(view==='sectionView') return renderSectionView(main,curSectionId);
+  if(view==='sectionEdit') return renderSectionEdit(main,curSectionId);
+}
+
+async function renderDaily(main){
+  const notes=(await all('dailyNotes')).sort((a,b)=>b.date-a.date);
+  if(!notes.length){ main.appendChild(h('div',{class:'empty'},['No daily notes yet. Tap + New Daily Note to start.'])); return; }
+  for(const n of notes){
+    const secs=(await all('sections')).filter(s=>s.dailyNoteId===n.id);
+    const topics=[...new Set(secs.map(s=>s.topic))];
+    const card=h('div',{class:'card',onclick:()=>{curNoteId=n.id;view='note';render();}},[
+      h('div',{class:'row'},[h('div',{class:'date'},[fmtDate(n.date)]),h('div',{class:'small'},[fmtTime(n.createdAt)])]),
+      h('div',{},[n.title]),
+      h('div',{},topics.map(t=>h('span',{class:'chip'},[t]))),
+      h('div',{class:'meta'},[secs.length+' section'+(secs.length!==1?'s':'')])
+    ]);
+    main.appendChild(card);
+  }
+}
+
+document.getElementById('fab').onclick=async()=>{
+  openModal(h('div',{},[
+    h('h3',{},['New Daily Note']),
+    (()=>{const i=h('input',{id:'ntitle',placeholder:'Title (e.g. Daily UPSC Notes)'}); i.value='Daily UPSC Notes'; return i;})(),
+    h('button',{class:'btn',onclick:async()=>{
+      const title=document.getElementById('ntitle').value.trim()||'Daily UPSC Notes';
+      const n=await createNote(title); closeModal(); curNoteId=n.id; view='note'; render();
+    }},['Create'])
+  ]));
+};
+
+async function renderNote(main,noteId){
+  const note=await getOne('dailyNotes',noteId);
+  if(!note){view='daily';return render();}
+  const secs=(await all('sections')).filter(s=>s.dailyNoteId===noteId).sort((a,b)=>a.createdAt-b.createdAt);
+  main.appendChild(h('div',{class:'topbar'},[
+    h('button',{class:'back',onclick:()=>history.back()},['←']),
+    h('div',{style:'flex:1'},[h('div',{class:'date'},[fmtDate(note.date)]),h('div',{class:'small'},[note.title])]),
+    h('button',{class:'btn danger',style:'width:auto;padding:6px 12px;font-size:12px;margin:0',onclick:async()=>{
+      if(confirm('Delete this daily note and all its sections?')){
+        await deleteNote(note.id);
+        view='daily';
+        render();
+      }
+    }},['Delete Note'])
+  ]));
+  if(!secs.length) main.appendChild(h('div',{class:'empty'},['No sections yet. Add your first topic section below.']));
+  for(const s of secs){
+    main.appendChild(h('div',{class:'card section-card',onclick:()=>{curSectionId=s.id;view='sectionView';render();}},[
+      h('div',{class:'topic'},[s.topic]),
+      h('h4',{style:'margin-bottom:0'},[s.title]),
+      s.tags&&s.tags.length ? h('div',{style:'margin-top:6px'},s.tags.map(t=>h('span',{class:'tag'},['#'+t]))) : h('span',{})
+    ]));
+  }
+  main.appendChild(h('button',{class:'btn sec',onclick:()=>openAddSectionModal(noteId)},['+ Add Section']));
+}
+
+async function renderSectionView(main,sectionId){
+  const s=await getOne('sections',sectionId);
+  if(!s){view='note';return render();}
+  const migrated=legacyToHtml(s.content);
+  if(migrated!==s.content){ s.content=migrated; await put('sections',s); }
+  main.appendChild(h('div',{class:'topbar'},[
+    h('button',{class:'back',onclick:()=>history.back()},['←']),
+    h('div',{style:'flex:1;overflow:hidden'},[h('div',{class:'topic'},[s.topic]),h('div',{class:'date',style:'font-size:16px'},[s.title])])
+  ]));
+  main.appendChild(h('div',{class:'pill-row'},[
+    h('button',{onclick:()=>openSectionMetaModal(s)},['Edit Title and Topic']),
+    h('button',{onclick:()=>{curSectionId=s.id;view='sectionEdit';render();}},['Edit Note'])
+  ]));
+  if(s.tags&&s.tags.length) main.appendChild(h('div',{style:'margin-bottom:10px'},s.tags.map(t=>h('span',{class:'tag'},['#'+t]))));
+  main.appendChild(h('div',{class:'small',style:'margin-bottom:8px'},['Updated '+fmtDate(s.updatedAt)]));
+  const body=h('div',{style:'font-size:14px;line-height:1.6;padding-bottom:30px'});
+  body.innerHTML=s.content||'<span style="color:var(--sub)">(no notes yet — tap Edit Note to start writing)</span>';
+  main.appendChild(body);
+}
+
+let sectionEditFlush=null;
+async function renderSectionEdit(main,sectionId){
+  const s=await getOne('sections',sectionId);
+  if(!s){view='note';return render();}
+  s.content=legacyToHtml(s.content);
+  main.appendChild(h('div',{class:'topbar'},[
+    h('button',{class:'back',onclick:()=>history.back()},['←']),
+    h('div',{style:'flex:1;overflow:hidden'},[h('div',{class:'topic'},[s.topic]),h('div',{class:'date',style:'font-size:16px'},[s.title])]),
+    h('button',{class:'btn ghost',style:'width:auto;padding:6px 10px;margin:0;white-space:nowrap',onclick:()=>insertImageAtCursor()},['🖼️ Image'])
+  ]));
+  const editor=h('div',{id:'noteEditor',contenteditable:'true',style:'min-height:60vh;font-size:15px;line-height:1.6;outline:none;padding-bottom:40px'});
+  editor.innerHTML=s.content;
+  main.appendChild(editor);
+  const statusLine=h('div',{class:'small',id:'saveStatusLine',style:'text-align:center;padding:6px 0 30px'},['']);
+  main.appendChild(statusLine);
+  let saveTimer=null;
+  const doSave=async()=>{
+    const fresh=await getOne('sections',sectionId);
+    if(!fresh) return;
+    fresh.content=editor.innerHTML; fresh.updatedAt=Date.now();
+    await put('sections',fresh);
+    const line=document.getElementById('saveStatusLine'); if(line) line.textContent='Saved '+fmtTime(Date.now());
+  };
+  editor.oninput=()=>{
+    const line=document.getElementById('saveStatusLine'); if(line) line.textContent='Saving…';
+    if(saveTimer) clearTimeout(saveTimer);
+    saveTimer=setTimeout(doSave,700);
+  };
+  sectionEditFlush=async()=>{ if(saveTimer) clearTimeout(saveTimer); await doSave(); };
+  setTimeout(()=>editor.focus(),50);
+}
+async function flushSectionEdit(){ if(sectionEditFlush){ await sectionEditFlush(); sectionEditFlush=null; } }
+function insertImageAtCursor(){
+  const input=document.createElement('input');
+  input.type='file'; input.accept='image/*';
+  input.onchange=async()=>{
+    const f=input.files[0]; if(!f) return;
+    const editor=document.getElementById('noteEditor'); editor.focus();
+    try{
+      const dataUrl=await readImageCompressed(f);
+      const imgTag='<img src="'+dataUrl+'" style="max-width:100%;border-radius:10px;display:block;margin:10px 0">';
+      if(!document.execCommand('insertHTML',false,imgTag)) editor.innerHTML+=imgTag;
+      editor.dispatchEvent(new Event('input'));
+    }catch(e){ alert('Could not read image: '+e.message); }
+  };
+  input.click();
+}
+async function openSectionMetaModal(s){
+  const titleI=h('input',{id:'ectitle'}); titleI.value=s.title;
+  const sel=h('select',{id:'ectopic'},TOPICS.map(t=>{const o=h('option',{value:t},[t]); if(t===s.topic)o.selected=true; return o;}));
+  const tagsI=h('input',{id:'ectags',placeholder:'Tags (comma separated)'}); tagsI.value=(s.tags||[]).join(', ');
+  openModal(h('div',{},[
+    h('h3',{},['Edit Title and Topic']),
+    h('label',{},['Topic']), sel,
+    h('label',{},['Title']), titleI,
+    h('label',{},['Tags']), tagsI,
+    h('label',{},[h('input',{type:'checkbox',id:'ecrev',style:'width:auto;display:inline;margin-right:6px', checked:s.needsRevision?'checked':undefined}),'Flag for revision']),
+    h('button',{class:'btn',onclick:async()=>{
+      s.title=titleI.value.trim()||s.title; s.topic=sel.value;
+      s.tags=tagsI.value.split(',').map(t=>t.trim()).filter(Boolean);
+      s.needsRevision=document.getElementById('ecrev').checked; s.updatedAt=Date.now();
+      await put('sections',s); closeModal(); render();
+    }},['Save']),
+    h('button',{class:'btn sec',onclick:()=>closeModal()},['Cancel']),
+    h('button',{class:'btn danger',onclick:async()=>{ if(confirm('Delete this section?')){ await deleteSection(s.id); closeModal(); view='note'; render(); } }},['Delete Section'])
+  ]));
+  setTimeout(()=>{const cb=document.getElementById('ecrev'); if(cb) cb.checked=s.needsRevision;},0);
+}
+
+async function openAddSectionModal(noteId){
+  const wrap=h('div',{},[]);
+  wrap.appendChild(h('h3',{},['Add Section']));
+  const modeRow=h('div',{class:'pill-row'},[
+    h('button',{class:'on',id:'m_new',onclick:()=>switchMode(true)},['Create New']),
+    h('button',{id:'m_existing',onclick:()=>switchMode(false)},['Add to Existing'])
+  ]);
+  wrap.appendChild(modeRow);
+  const newBox=h('div',{id:'box_new'},[
+    h('label',{},['Section Title']), h('input',{id:'stitle',placeholder:'e.g. Parliamentary Committees'}),
+    h('label',{},['UPSC Topic']), h('select',{id:'stopic'},TOPICS.map(t=>h('option',{value:t},[t]))),
+    h('label',{},['Tags (comma separated, optional)']), h('input',{id:'stags',placeholder:'e.g. NCERT, static'}),
+    h('button',{class:'btn',onclick:async()=>{
+      const title=document.getElementById('stitle').value.trim();
+      if(!title){alert('Enter a section title');return;}
+      const topic=document.getElementById('stopic').value;
+      const tags=document.getElementById('stags').value.split(',').map(t=>t.trim()).filter(Boolean);
+      const s=await addSection(noteId,topic,title,'',tags);
+      closeModal(); curSectionId=s.id; view='sectionEdit'; render();
+    }},['Continue to Notes →'])
+  ]);
+  const exBox=h('div',{id:'box_existing',style:'display:none'},[
+    h('label',{},['Search existing sections']), h('input',{id:'exsearch',placeholder:'e.g. El Niño'}),
+    h('div',{id:'exresults'},[])
+  ]);
+  wrap.appendChild(newBox); wrap.appendChild(exBox);
+  openModal(wrap);
+  function switchMode(isNew){
+    document.getElementById('m_new').classList.toggle('on',isNew);
+    document.getElementById('m_existing').classList.toggle('on',!isNew);
+    document.getElementById('box_new').style.display=isNew?'':'none';
+    document.getElementById('box_existing').style.display=isNew?'none':'';
+  }
+  document.getElementById('exsearch').oninput=async(e)=>{
+    const q=e.target.value.trim().toLowerCase(); const res=document.getElementById('exresults'); res.innerHTML='';
+    if(!q) return;
+    const secs=(await all('sections')).filter(s=>s.title.toLowerCase().includes(q)||s.content.toLowerCase().includes(q));
+    secs.slice(0,20).forEach(s=>{
+      res.appendChild(h('div',{class:'card',onclick:()=>{ closeModal(); curSectionId=s.id; view='sectionView'; render(); }},
+        [h('div',{class:'topic'},[s.topic]),h('h4',{},[s.title]),h('div',{class:'meta'},['Last updated '+fmtDate(s.updatedAt)])]));
+    });
+  };
+}
+
+async function renderTopics(main){
+  const secs=await all('sections');
+  for(const t of TOPICS){
+    const ts=secs.filter(s=>s.topic===t);
+    const last=ts.length?Math.max(...ts.map(s=>s.updatedAt)):null;
+    main.appendChild(h('div',{class:'card',onclick:()=>{curTopic=t;view='topicDetail';render();}},[
+      h('div',{class:'row'},[h('div',{},[t]),h('div',{class:'small'},[ts.length+' sections'])]),
+      h('div',{class:'meta'},[last?('Last updated '+fmtDate(last)):'No sections yet'])
+    ]));
+  }
+}
+let curTopic=null;
+async function renderTopicDetail(main,topic){
+  const notesById={}; (await all('dailyNotes')).forEach(n=>notesById[n.id]=n);
+  const secs=(await all('sections')).filter(s=>s.topic===topic).sort((a,b)=>b.createdAt-a.createdAt);
+  main.appendChild(h('div',{class:'topbar'},[
+    h('button',{class:'back',onclick:()=>history.back()},['←']),
+    h('div',{class:'date'},[topic])
+  ]));
+  if(!secs.length) main.appendChild(h('div',{class:'empty'},['No sections under this topic yet.']));
+  for(const s of secs){
+    const dn=notesById[s.dailyNoteId];
+    main.appendChild(h('div',{class:'card section-card',onclick:()=>{curSectionId=s.id;view='sectionView';render();}},[
+      h('h4',{},[s.title]),
+      h('div',{class:'meta'},['From: '+(dn?fmtDate(dn.date):'')]),
+      h('div',{class:'content'},[contentPreview(s.content)])
+    ]));
+  }
+}
+
+async function renderRevision(main){
+  const secs=(await all('sections')).filter(s=>s.needsRevision);
+  if(!secs.length){ main.appendChild(h('div',{class:'empty'},['Nothing flagged. Open a section and check "Flag for revision" to add it here.'])); return; }
+  for(const s of secs){
+    main.appendChild(h('div',{class:'card section-card',onclick:()=>{curSectionId=s.id;view='sectionView';render();}},[
+      h('div',{class:'topic'},[s.topic]), h('h4',{},[s.title]),
+      h('div',{class:'meta'},['Updated '+fmtDate(s.updatedAt)])
+    ]));
+  }
+}
+
+async function renderSearch(main){
+  const box=h('div',{class:'searchbox'},[h('input',{id:'gsearch',placeholder:'Search titles, notes, topics, tags...'})]);
+  const results=h('div',{id:'gresults'},[]);
+  main.appendChild(box); main.appendChild(results);
+  document.getElementById('gsearch').oninput=async e=>{
+    const q=e.target.value.trim().toLowerCase(); results.innerHTML='';
+    if(!q) return;
+    const notesById={}; (await all('dailyNotes')).forEach(n=>notesById[n.id]=n);
+    const secs=await all('sections');
+    const matches=secs.filter(s=>s.title.toLowerCase().includes(q)||s.content.toLowerCase().includes(q)||
+      s.topic.toLowerCase().includes(q)||(s.tags||[]).some(t=>t.toLowerCase().includes(q)));
+    if(!matches.length){ results.appendChild(h('div',{class:'empty'},['No matches.'])); return; }
+    matches.forEach(s=>{
+      const dn=notesById[s.dailyNoteId];
+      results.appendChild(h('div',{class:'card section-card',onclick:()=>{curSectionId=s.id;view='sectionView';render();}},[
+        h('div',{class:'topic'},[s.topic]), h('h4',{},[s.title]),
+        h('div',{class:'meta'},['From: '+(dn?fmtDate(dn.date):'')]),
+        h('div',{class:'content'},[contentPreview(s.content)])
+      ]));
+    });
+  };
+}
+
+async function renderSettings(main){
+  main.appendChild(h('div',{class:'card'},[
+    h('div',{},['Export Backup']),
+    h('div',{class:'meta'},['Save all daily notes and sections as a JSON file.']),
+    h('button',{class:'btn sec',onclick:exportBackup},['Export Backup'])
+  ]));
+  main.appendChild(h('div',{class:'card'},[
+    h('div',{},['Import Backup']),
+    h('div',{class:'meta'},['Restore from a previously exported JSON file. This merges with existing data.']),
+    h('input',{type:'file',id:'importFile',accept:'.json'}),
+    h('button',{class:'btn sec',onclick:importBackup},['Import Backup'])
+  ]));
+  main.appendChild(h('div',{class:'card'},[
+    h('div',{},['Cloud Sync (Supabase)']),
+    h('div',{class:'meta'},['Notes sync automatically whenever this device is online. Use these only if you want to force a full push or pull.']),
+    h('button',{class:'btn',id:'cloudBackupBtn',onclick:syncToCloud},['Force Full Backup']),
+    h('button',{class:'btn sec',id:'cloudRestoreBtn',onclick:restoreFromCloud},['Force Full Restore'])
+  ]));
+  const notes=await all('dailyNotes'); const secs=await all('sections');
+  main.appendChild(h('div',{class:'card'},[h('div',{class:'meta'},[notes.length+' daily notes, '+secs.length+' sections stored locally on this device.']) ]));
+}
+async function syncToCloud(){
+  const btn=document.getElementById('cloudBackupBtn'); btn.textContent='Backing up...'; btn.disabled=true;
+  try{
+    const notes=await all('dailyNotes'); const secs=await all('sections');
+    const notesPayload=notes.map(n=>({id:n.id,date:n.date,title:n.title,created_at:n.createdAt}));
+    const secsPayload=secs.map(s=>({id:s.id,daily_note_id:s.dailyNoteId,topic:s.topic,title:s.title,
+      content:s.content,tags:s.tags||[],needs_revision:!!s.needsRevision,created_at:s.createdAt,
+      updated_at:s.updatedAt,history:s.history||[]}));
+    const r1=await sbClient.from('daily_notes').upsert(notesPayload);
+    const r2=await sbClient.from('sections').upsert(secsPayload);
+    if(r1.error||r2.error) throw new Error((r1.error&&r1.error.message)||(r2.error&&r2.error.message));
+    alert('Backed up '+notes.length+' notes and '+secs.length+' sections to the cloud.');
+  }catch(e){ alert('Cloud backup failed: '+e.message); }
+  btn.textContent='Backup to Cloud'; btn.disabled=false;
+}
+async function restoreFromCloud(){
+  if(!confirm('This will merge cloud data into this device. Continue?')) return;
+  const btn=document.getElementById('cloudRestoreBtn'); btn.textContent='Restoring...'; btn.disabled=true;
+  try{
+    const r1=await sbClient.from('daily_notes').select('*');
+    const r2=await sbClient.from('sections').select('*');
+    if(r1.error||r2.error) throw new Error((r1.error&&r1.error.message)||(r2.error&&r2.error.message));
+    for(const n of r1.data) await put('dailyNotes',{id:n.id,date:n.date,title:n.title,createdAt:n.created_at});
+    for(const s of r2.data) await put('sections',{id:s.id,dailyNoteId:s.daily_note_id,topic:s.topic,
+      title:s.title,content:s.content,tags:s.tags||[],needsRevision:s.needs_revision,
+      createdAt:s.created_at,updatedAt:s.updated_at,history:s.history||[]});
+    alert('Restored '+r1.data.length+' notes and '+r2.data.length+' sections from the cloud.');
+    render();
+  }catch(e){ alert('Restore failed: '+e.message); }
+  btn.textContent='Restore from Cloud'; btn.disabled=false;
+}
+async function exportBackup(){
+  const data={dailyNotes:await all('dailyNotes'),sections:await all('sections'),exportedAt:Date.now()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='upsc-notes-backup-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+}
+async function importBackup(){
+  const f=document.getElementById('importFile').files[0];
+  if(!f){alert('Choose a file first');return;}
+  try{
+    const text=await f.text(); const data=JSON.parse(text);
+    for(const n of (data.dailyNotes||[])) await put('dailyNotes',n);
+    for(const s of (data.sections||[])) await put('sections',s);
+    alert('Import complete'); render();
+  }catch(e){ alert('Invalid backup file'); }
+}
+
+document.querySelectorAll('nav.bottom button').forEach(b=>b.onclick=async()=>{
+  if(view==='sectionEdit') await flushSectionEdit();
+  view=b.dataset.v; render();
+});
+
+(async()=>{ try{ db=await openDB(); render(); if(navigator.onLine){ setSyncStatus('syncing'); autoSync(); } else { setSyncStatus('offline'); } }catch(e){ document.getElementById('main').textContent='Storage error: '+e; } })();
+</script>  <script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('Service Worker registered', reg))
+      .catch(err => console.log('Service Worker failure', err));
+  });
+}
+</script>
+</body>
+</html>
